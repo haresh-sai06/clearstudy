@@ -1,0 +1,11 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createPlan,validateTopics,validateState,progress} from '../dist/core.mjs';
+const topics=[{id:'a',title:'A',importance:3,confidence:1},{id:'b',title:'B',importance:1,confidence:3},{id:'c',title:'C',importance:2,confidence:2}];
+test('every supported time stays within the exact budget',()=>{for(let n=5;n<=180;n++){const p=createPlan(topics,n);assert.equal(p.sessions.reduce((a,s)=>a+s.minutes,0),n);assert.ok(p.sessions.every(s=>s.minutes>=5));}});
+test('weak important topics are first and receive more time',()=>{const p=createPlan(topics,45);assert.equal(p.sessions[0].id,'a');assert.ok(p.sessions[0].minutes>p.sessions[2].minutes);});
+test('short windows defer topics rather than create tiny sessions',()=>{const p=createPlan(topics,5);assert.equal(p.sessions.length,1);assert.deepEqual(p.deferred,['C','B']);});
+test('ties keep original order',()=>{const p=createPlan(topics.map(t=>({...t,importance:1,confidence:1})),15);assert.deepEqual(p.sessions.map(s=>s.id),['a','b','c']);});
+test('invalid times rejected',()=>{for(const n of [0,4,181,10.5,NaN])assert.throws(()=>createPlan(topics,n));});
+test('invalid and oversized topics rejected',()=>{assert.throws(()=>validateTopics([]));assert.throws(()=>validateTopics([{...topics[0],title:' '} ]));assert.throws(()=>validateTopics([{...topics[0],confidence:4}]));assert.throws(()=>validateTopics(Array(21).fill(topics[0])));});
+test('backup roundtrip preserves notes and progress',()=>{const p=createPlan(topics,45);p.sessions[0].completed=true;p.sessions[0].notes='Remember an example';const s=validateState(JSON.parse(JSON.stringify({version:1,topics,minutes:45,plan:p})));assert.equal(s.plan.sessions[0].notes,'Remember an example');assert.deepEqual(progress(s.plan),{done:1,total:3,minutes:p.sessions[0].minutes});});
+test('malformed backups cannot override allocation',()=>{const p=createPlan(topics,45);p.sessions[0].minutes=100;assert.throws(()=>validateState({version:1,topics,minutes:45,plan:p}));assert.throws(()=>validateState({version:2,topics,minutes:45}));});
+test('unbuilt plans have zero progress',()=>assert.deepEqual(progress(null),{done:0,total:0,minutes:0}));
