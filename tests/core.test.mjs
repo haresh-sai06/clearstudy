@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {createPlan,validateTopics,validateState,progress} from '../dist/core.mjs';
+import test from 'node:test';import assert from 'node:assert/strict';import {createPlan,validateTopics,validateState,progress,proposePlan} from '../dist/core.mjs';
 const topics=[{id:'a',title:'A',importance:3,confidence:1},{id:'b',title:'B',importance:1,confidence:3},{id:'c',title:'C',importance:2,confidence:2}];
 test('every supported time stays within the exact budget',()=>{for(let n=5;n<=180;n++){const p=createPlan(topics,n);assert.equal(p.sessions.reduce((a,s)=>a+s.minutes,0),n);assert.ok(p.sessions.every(s=>s.minutes>=5));}});
 test('weak important topics are first and receive more time',()=>{const p=createPlan(topics,45);assert.equal(p.sessions[0].id,'a');assert.ok(p.sessions[0].minutes>p.sessions[2].minutes);});
@@ -9,3 +9,9 @@ test('invalid and oversized topics rejected',()=>{assert.throws(()=>validateTopi
 test('backup roundtrip preserves notes and progress',()=>{const p=createPlan(topics,45);p.sessions[0].completed=true;p.sessions[0].notes='Remember an example';const s=validateState(JSON.parse(JSON.stringify({version:1,topics,minutes:45,plan:p})));assert.equal(s.plan.sessions[0].notes,'Remember an example');assert.deepEqual(progress(s.plan),{done:1,total:3,minutes:p.sessions[0].minutes});});
 test('malformed backups cannot override allocation',()=>{const p=createPlan(topics,45);p.sessions[0].minutes=100;assert.throws(()=>validateState({version:1,topics,minutes:45,plan:p}));assert.throws(()=>validateState({version:2,topics,minutes:45}));});
 test('unbuilt plans have zero progress',()=>assert.deepEqual(progress(null),{done:0,total:0,minutes:0}));
+function savedWork(){const plan=createPlan(topics,45);plan.sessions[0].completed=true;plan.sessions[0].notes='Keep this explanation';return {version:1,topics:validateTopics(topics),minutes:45,plan};}
+test('proposing a changed plan cannot mutate saved work',()=>{const old=savedWork(),before=JSON.stringify(old);const proposal=proposePlan(old,topics,30);assert.equal(proposal.needsConfirmation,true);assert.equal(JSON.stringify(old),before);assert.equal(proposal.next.minutes,30);assert.equal(proposal.next.plan.sessions[0].completed,false);});
+test('rebuilding unchanged settings preserves notes and completion',()=>{const old=savedWork(),proposal=proposePlan(old,topics,45);assert.equal(proposal.next,old);assert.equal(proposal.unchanged,true);assert.equal(proposal.needsConfirmation,false);assert.equal(proposal.next.plan.sessions[0].notes,'Keep this explanation');});
+test('removing a topic with saved work requires confirmation',()=>{assert.equal(proposePlan(savedWork(),topics.slice(1),45).needsConfirmation,true);});
+test('invalid edits do not erase the saved plan',()=>{const old=savedWork(),before=JSON.stringify(old);assert.throws(()=>proposePlan(old,topics,0));assert.equal(JSON.stringify(old),before);});
+test('fresh and untouched plans can be created without confirmation',()=>{const old={version:1,topics,minutes:45,plan:null};assert.equal(proposePlan(old,topics,30).needsConfirmation,false);});

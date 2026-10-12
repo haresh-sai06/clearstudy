@@ -6,13 +6,15 @@ A browser-local study planner for a short revision window. Add topics, set impor
 
 Use a static HTTP server to serve `dist/`. For example: `python -m http.server 8742 --directory dist --bind 127.0.0.1`. Open http://127.0.0.1:8742/. ES modules need HTTP; opening index.html directly as a file is not supported.
 
-Run `npm test` or `node --test tests/*.test.mjs`. No npm dependencies or installation are required. Tests use Node 18+.
+Run `npm ci`, then `npm test` or `node --test tests/*.test.mjs`. Runtime has no dependencies. The interface test uses pinned jsdom as a development dependency and emulates modal opening/closing; it does not prove browser rendering. Node 24.19+ is used for the full suite. Core tests alone need no dependency installation: `node --test tests/core.test.mjs`.
 
 ## How it works
 
 Topics receive importance × (4 − confidence) as a priority score. Each selected topic receives at least five minutes; remaining minutes are distributed proportionally. A short window defers lower-priority topics. Ties preserve input order. Every valid plan uses the exact requested whole-minute budget.
 
 Progress and notes use localStorage on this origin. They do not sync between devices or between the local and hosted origins. JSON restore validates the data before replacing current state. Browser storage errors display a warning and users can download a backup. Use a private device for personal notes.
+
+Topic/time edits stay in a separate draft until you make a plan. They do not erase saved notes or completion. Rebuilding unchanged settings preserves progress; replacing a changed plan that has notes or completion requires confirmation. Restoring a backup also requires confirmation. Backups contain the saved plan, not unapplied edits. Reload discards unapplied edits and restores saved settings.
 
 ## Scope and honesty
 

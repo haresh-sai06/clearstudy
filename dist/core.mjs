@@ -47,3 +47,14 @@ export function progress(plan) {
   if (!plan) return {done: 0, total: 0, minutes: 0};
   return {done: plan.sessions.filter(s => s.completed).length, total: plan.sessions.length, minutes: plan.sessions.filter(s => s.completed).reduce((n, s) => n + s.minutes, 0)};
 }
+
+// Prepare a replacement without touching the saved plan. The interface decides
+// whether to commit it after the user reviews the loss of notes or completion.
+export function proposePlan(current, topics, minutes) {
+  const plan = createPlan(topics, minutes);
+  const next = {version: 1, topics: validateTopics(topics), minutes: Number(minutes), plan};
+  const sameSettings = JSON.stringify(current.topics) === JSON.stringify(next.topics) && current.minutes === next.minutes;
+  if (sameSettings && current.plan) return {next: current, needsConfirmation: false, unchanged: true};
+  const hasWork = current.plan?.sessions.some(s => s.completed || s.notes.trim());
+  return {next, needsConfirmation: Boolean(hasWork), unchanged: false};
+}
