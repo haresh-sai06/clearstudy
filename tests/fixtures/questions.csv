@@ -1,0 +1,4 @@
+topic,question,answer
+Software testing,What should a test assertion check?,It should compare the actual result with the expected behavior.
+Software testing,"Why try invalid input, too?","Invalid input can reveal errors that normal inputs do not. The program should handle it clearly and preserve saved work."
+Software testing,What is the difference between a unit test and a browser test?,A unit test checks a small part of the code. A browser test checks how the page and its controls work together.

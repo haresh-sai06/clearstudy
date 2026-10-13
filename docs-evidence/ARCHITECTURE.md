@@ -1,0 +1,13 @@
+# ClearStudy revision workspace
+
+One browser origin owns two versioned records: the original `clearstudy-v1` planner and `clearstudy-review-v1` question bank. The original planner remains compatible. A full downloadable backup combines them; older plan-only backups keep the question bank unchanged. Import validates the complete file before asking to replace saved work. Unapplied form drafts are excluded.
+
+`core.mjs` owns plan allocation and validation. `review.mjs` owns question validation, CSV parsing, atomic duplicate-aware merge, scheduling, timer math and summaries. `app.mjs` handles the planner and combined backup. `review-ui.mjs` binds question editing, due/all practice, reveal, ratings, activity and timer controls. Runtime has no dependency or API key. Tests use development-only jsdom.
+
+Self-rating rules: Again returns in 10 minutes; Hard in 1 day; Good uses at least 1 day and doubles the previous whole-day interval; Easy uses at least 3 days and triples it. Gaps are capped at 365 days. New questions are immediately due. Practice order is due time then review count, with stable input-order ties. Each question appears once per session; a later Again review is a new session. This is a transparent scheduling rule with no claim to a calibrated memory model.
+
+Changing a question, topic or reference answer resets its future review schedule; existing historical attempts remain. Duplicate topic/question pairs are rejected or skipped on import. Editing/importing is paused while a practice queue is unfinished; finishing early saves ratings and leaves unreviewed questions eligible. Typed recall drafts, queue position and clock deadlines persist. Running clocks use absolute deadlines, so reload or background throttling cannot restart a focus block.
+
+`sw.js` caches only the same-origin application shell and serves it when fetching fails. A first online load and successful cache installation are necessary. On a normal online fetch it refreshes cached assets. New releases update the service worker cache name. The manifest enables standalone presentation on compatible browsers; device installation was not tested.
+
+Question/answer text is escaped before HTML rendering; CSV values remain text. Question and file size limits bound ingestion. Personal study content never goes to an application server. GitHub Pages/Sites receive normal page requests only; they do not receive the stored question bank. Exported files include personal notes and should remain private unless the owner deliberately shares them.
