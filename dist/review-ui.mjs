@@ -1,4 +1,4 @@
-import {emptyReview,validateReview,validateCard,dueCards,rateCard,summarize,parseCSV,mergeCards,timerRemaining,pauseTimer,startTimer} from './review.mjs';
+import {emptyReview,validateReview,validateCard,dueCards,rateCard,summarize,parseCSV,mergeCards,timerRemaining,pauseTimer,startTimer} from './review.mjs?v=0.2.1';
 const key='clearstudy-review-v1',$=s=>document.querySelector(s),win=document.defaultView,esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state=emptyReview(),editing=null,revealed=false,notice,interval;
 function persist(){try{localStorage.setItem(key,JSON.stringify(state));return true;}catch{notice('Browser storage is unavailable. Download a full backup before leaving.');return false;}}

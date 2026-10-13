@@ -1,6 +1,6 @@
-import {proposePlan, validateState, progress} from './core.mjs';
-import {initReview,backupReview,restoreReview,reviewPlannedTopic} from './review-ui.mjs';
-import {validateReview} from './review.mjs';
+import {proposePlan, validateState, progress} from './core.mjs?v=0.2.1';
+import {initReview,backupReview,restoreReview,reviewPlannedTopic} from './review-ui.mjs?v=0.2.1';
+import {validateReview} from './review.mjs?v=0.2.1';
 const key='clearstudy-v1', $=s=>document.querySelector(s);
 const example=()=>({version:1,minutes:45,topics:[{id:'bell',title:'Bell states and entanglement',importance:3,confidence:1},{id:'gates',title:'Quantum gates',importance:3,confidence:2},{id:'measurement',title:'Measurement probabilities',importance:2,confidence:2}],plan:null});
 let state=example(), draft;
@@ -36,4 +36,4 @@ $('#import').addEventListener('change',async e=>{const file=e.target.files[0];if
 $('#example').addEventListener('click',async()=>{if(!await askReplace('Replace this browser’s plan with the example? Download a backup first if you need it.'))return;state=example();resetDraft();const saved=save();form();result();if(saved)notify('A new example is ready.');});
 form();result();
 initReview(notify);
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').then(()=>navigator.serviceWorker.ready).then(()=>{$('#offline-state').textContent='Offline access ready';}).catch(()=>{$('#offline-state').textContent='Online access · offline cache unavailable';});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=0.2.1').then(()=>navigator.serviceWorker.ready).then(()=>{$('#offline-state').textContent='Offline access ready';}).catch(()=>{$('#offline-state').textContent='Online access · offline cache unavailable';});}
