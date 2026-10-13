@@ -34,4 +34,6 @@ No independent reviewer, longitudinal study, physical-mobile validation, assisti
 
 ## Next gate: TRL 6 demonstration
 
+The user chose **prepare the pilot for later** on 13 October 2026. The [demonstration protocol](TRL6-PILOT.md) is prepared. Version0.3 strengthens full-capacity browsing, stale-tab protection, active-topic recovery and local session reports. Current self-assessment remains TRL5; no human pilot outcome has been recorded.
+
 Run a documented pilot with consenting students using their own permitted course material on real desktop and mobile devices. Complete import → revision → interruption/recovery → next-day review → backup recovery. Record observed task completion, data-loss defects, confusion and browser/device versions. Fix material defects, repeat failed tasks, and obtain an independent review of the evidence before claiming the next level. Do not claim grade improvement from a short usability pilot.

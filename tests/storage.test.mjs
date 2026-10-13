@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createStore} from '../dist/storage.mjs';
+const memory=()=>{const m=new Map();return {getItem:k=>m.get(k)??null,setItem:(k,v)=>m.set(k,v)};};
+test('a stale tab cannot silently overwrite newer saved data',()=>{const s=memory(),a=createStore(s,'k'),b=createStore(s,'k');a.write({note:'Newer work'});assert.equal(b.changed(),true);assert.throws(()=>b.write({note:'Stale work'}),/Another tab/);assert.equal(JSON.parse(s.getItem('k')).note,'Newer work');});
+test('explicitly approved restore replaces saved data and establishes a new snapshot',()=>{const s=memory(),a=createStore(s,'k'),b=createStore(s,'k');a.write({value:1});b.write({value:2},{replace:true});assert.equal(b.changed(),false);b.write({value:3});assert.equal(JSON.parse(s.getItem('k')).value,3);});
+test('a failed storage write is never recorded as a saved snapshot',()=>{const s=memory(),a=createStore(s,'k');s.setItem=()=>{throw new Error('Quota exceeded');};assert.throws(()=>a.write({x:1}),/Quota/);assert.equal(a.read(),null);});

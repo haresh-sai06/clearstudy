@@ -24,7 +24,8 @@ export function validateReview(value){
   const s=value.session;
   if(!Array.isArray(s.queue)||s.queue.length>500||new Set(s.queue).size!==s.queue.length||s.queue.some(id=>!ids.has(id))||!Number.isInteger(s.completed)||s.completed<0||s.completed>500||!Number.isInteger(s.total)||s.total<s.completed+s.queue.length||s.total>500)throw new Error('Invalid practice session.');
   if(typeof(s.attempt??'')!=='string'||(s.attempt??'').length>4000)throw new Error('Invalid draft answer.');
-  session={queue:[...s.queue],completed:s.completed,total:s.total,startedAt:num(s.startedAt,0,8640000000000000,'session date'),attempt:s.attempt??''};
+  const topic=s.topic??'';if(typeof topic!=='string'||topic.length>120||topic&&s.queue.some(id=>cards.find(c=>c.id===id)?.topic!==topic))throw new Error('Invalid session topic.');
+  session={queue:[...s.queue],completed:s.completed,total:s.total,startedAt:num(s.startedAt,0,8640000000000000,'session date'),attempt:s.attempt??'',topic};
  }
  return {version:1,cards,history,session,timer};
 }
@@ -81,4 +82,10 @@ export function mergeCards(existing,incoming,makeId){
   result.push({...card,id:makeId()});added++;
  }
  return {cards:result,added,skipped};
+}
+export function sessionReport(state,feedback={},now=Date.now()){
+ state=validateReview(state);
+ const clean=(name,max=1000)=>{const v=feedback[name]??'';if(typeof v!=='string'||v.length>max)throw new Error('Keep session feedback within its text limit.');return v.trim();};
+ const ratings={again:0,hard:0,good:0,easy:0};state.history.forEach(h=>ratings[h.rating]++);
+ return {format:'clearstudy-session-report',version:1,appVersion:'0.3.0',generatedAt:new Date(now).toISOString(),automatic:{questions:state.cards.length,dueNow:dueCards(state,now).length,retainedAttempts:state.history.length,ratings,currentSession:state.session?{startedAt:new Date(state.session.startedAt).toISOString(),reviewed:state.session.completed,total:state.session.total,remaining:state.session.queue.length}:null,focusTimer:{minutes:state.timer.durationSec/60,remainingSeconds:timerRemaining(state.timer,now)}},selfReported:{device:clean('device',120),browser:clean('browser',120),experience:clean('experience',80),feedback:clean('feedback')},privacy:'Question text, reference answers, written attempts and topic names are excluded. Free-text feedback contains only what the tester chooses to write.',evidenceType:'Local session record; self-reports are not independently verified; no learning-outcome inference.'};
 }

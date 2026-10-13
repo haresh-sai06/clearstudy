@@ -15,6 +15,12 @@ Live demo: https://haresh-sai06.github.io/clearstudy/
 
 See [architecture](docs-evidence/ARCHITECTURE.md) and the evidence-based [TRL self-assessment](docs-evidence/TRL-ASSESSMENT.md).
 
+## Version 0.3 pilot preparation
+
+Full banks now render 12 cards per page. Stale tabs detect a newer save and warn before overwriting it. A selected topic survives session reload, with the filter locked during unfinished practice. Download a local session report with progress counts and optional usability feedback; question text and written answers are excluded. No telemetry or report upload is added.
+
+The [TRL6 pilot protocol](docs-evidence/TRL6-PILOT.md) is ready. The user deferred the real-user trial; engineering self-assessment remains TRL5 until the documented demonstration and review are complete.
+
 ## Run
 
 Use a static HTTP server to serve `dist/`. For example: `python -m http.server 8742 --directory dist --bind 127.0.0.1`. Open http://127.0.0.1:8742/. ES modules need HTTP; opening index.html directly as a file is not supported.

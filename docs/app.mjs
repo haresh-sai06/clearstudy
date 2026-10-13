@@ -1,14 +1,15 @@
-import {proposePlan, validateState, progress} from './core.mjs?v=0.2.1';
-import {initReview,backupReview,restoreReview,reviewPlannedTopic} from './review-ui.mjs?v=0.2.1';
-import {validateReview} from './review.mjs?v=0.2.1';
+import {proposePlan, validateState, progress} from './core.mjs?v=0.3.0';
+import {initReview,backupReview,restoreReview,reviewPlannedTopic} from './review-ui.mjs?v=0.3.0';
+import {validateReview} from './review.mjs?v=0.3.0';
+import {createStore} from './storage.mjs?v=0.3.0';
 const key='clearstudy-v1', $=s=>document.querySelector(s);
 const example=()=>({version:1,minutes:45,topics:[{id:'bell',title:'Bell states and entanglement',importance:3,confidence:1},{id:'gates',title:'Quantum gates',importance:3,confidence:2},{id:'measurement',title:'Measurement probabilities',importance:2,confidence:2}],plan:null});
-let state=example(), draft;
+let state=example(), draft,store;
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function notify(message){$('#message').textContent=message;}
 function askReplace(message){const dialog=$('#replace-dialog');$('#replace-message').textContent=message;dialog.returnValue='cancel';return new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue==='replace'),{once:true});dialog.showModal();});}
-try {const saved=localStorage.getItem(key);if(saved) state=validateState(JSON.parse(saved));} catch {notify('Your previous plan could not be restored. An example is ready; your original backup file has not changed.');}
-function save(){try{localStorage.setItem(key,JSON.stringify(state));return true;}catch{notify('Browser storage is unavailable. Download a backup before leaving this page.');return false;}}
+try {store=createStore(localStorage,key);const saved=store.read();if(saved) state=validateState(JSON.parse(saved));} catch {notify('Your previous plan could not be restored. An example is ready; your original backup file has not changed.');}
+function save(replace=false){try{if(!store)store=createStore(localStorage,key);store.write(state,{replace});return true;}catch(err){notify(`${err.message} Your edits are in this tab only; download a full backup before leaving.`);return false;}}
 function resetDraft(){draft={minutes:state.minutes,topics:state.topics.map(t=>({...t}))};}
 resetDraft();
 function form(){
@@ -32,8 +33,10 @@ $('#result').addEventListener('click',e=>{const b=e.target.closest('[data-comple
 $('#result').addEventListener('input',e=>{if(e.target.dataset.note!==undefined){state.plan.sessions[Number(e.target.dataset.note)].notes=e.target.value;save();}});
 $('#result').addEventListener('click',e=>{const b=e.target.closest('[data-practice]');if(b){const s=state.plan.sessions[Number(b.dataset.practice)];reviewPlannedTopic(s.title,s.minutes);}});
 $('#export').addEventListener('click',()=>{try{validateState(state);const url=URL.createObjectURL(new Blob([JSON.stringify({...state,review:backupReview()},null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='clearstudy-full-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('Full backup downloaded: plan, notes, questions, ratings and focus session. Unapplied edits are not included.');}catch(err){notify(err.message);}});
-$('#import').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>32000000)throw new Error('Choose a backup smaller than 32 MB.');const raw=JSON.parse(await file.text()),restored=validateState(raw),review=raw.review===undefined?null:validateReview(raw.review);if(!await askReplace(review?'Replace this browser’s plan, question bank, review history and focus session with this full backup? Download your current backup first.':'Replace the saved plan with this older backup? Your question bank stays unchanged. Download your current backup first.')){notify('Your current plan was kept.');return;}state=restored;resetDraft();const saved=save(),reviewSaved=review?restoreReview(review):true;form();result();if(saved&&reviewSaved)notify('Backup restored. Your saved progress is ready.');}catch(err){notify(`Backup not restored: ${err.message}`);}finally{e.target.value='';}});
+$('#import').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>32000000)throw new Error('Choose a backup smaller than 32 MB.');const raw=JSON.parse(await file.text()),restored=validateState(raw),review=raw.review===undefined?null:validateReview(raw.review);if(!await askReplace(review?'Replace this browser’s plan, question bank, review history and focus session with this full backup? Download your current backup first.':'Replace the saved plan with this older backup? Your question bank stays unchanged. Download your current backup first.')){notify('Your current plan was kept.');return;}state=restored;resetDraft();const saved=save(true),reviewSaved=review?restoreReview(review):true;form();result();if(saved&&reviewSaved)notify('Backup restored. Your saved progress is ready.');}catch(err){notify(`Backup not restored: ${err.message}`);}finally{e.target.value='';}});
 $('#example').addEventListener('click',async()=>{if(!await askReplace('Replace this browser’s plan with the example? Download a backup first if you need it.'))return;state=example();resetDraft();const saved=save();form();result();if(saved)notify('A new example is ready.');});
 form();result();
 initReview(notify);
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=0.2.1').then(()=>navigator.serviceWorker.ready).then(()=>{$('#offline-state').textContent='Offline access ready';}).catch(()=>{$('#offline-state').textContent='Online access · offline cache unavailable';});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=0.3.0').then(()=>navigator.serviceWorker.ready).then(()=>{$('#offline-state').textContent='Offline access ready';}).catch(()=>{$('#offline-state').textContent='Online access · offline cache unavailable';});}
+
+document.defaultView.addEventListener('storage',e=>{if(e.key===key&&store?.changed())notify('The saved plan changed in another tab. Download this tab’s backup and reload before editing.');});

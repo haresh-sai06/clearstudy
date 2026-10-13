@@ -1,5 +1,5 @@
-const CACHE='clearstudy-workspace-v3';
-const ASSETS=['./?v=0.2.1','./index.html?v=0.2.1','./style.css?v=0.2.1','./app.mjs?v=0.2.1','./core.mjs?v=0.2.1','./review.mjs?v=0.2.1','./review-ui.mjs?v=0.2.1','./icon.svg','./manifest.webmanifest'];
+const CACHE='clearstudy-workspace-v4';
+const ASSETS=['./?v=0.3.0','./index.html?v=0.3.0','./style.css?v=0.3.0','./app.mjs?v=0.3.0','./core.mjs?v=0.3.0','./review.mjs?v=0.3.0','./review-ui.mjs?v=0.3.0','./storage.mjs?v=0.3.0','./icon.svg','./manifest.webmanifest'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('clearstudy-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{
